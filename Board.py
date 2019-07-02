@@ -5,6 +5,10 @@ from random import randint
 BOARD_CASES = 8
 
 class Board:
+    
+    def num_let(self, number):
+        return ["A","B","C","D","E","F","G","H"][number]
+
     def GetPiece(self, value):
         if value == 0: return Blank
         Pieces = {
@@ -62,6 +66,7 @@ class Board:
 
         if (x,y) in self.moveCases:
             px,py = self.selectedCase
+            self.last_moves.append(Move(self.playingTeam, "{}{} > {}{}".format(self.num_let(px),py+1,self.num_let(x),y+1)))
             self.board[px][py].move(self, x,y)
     
     def IsOccuped(self, x,y):
@@ -141,3 +146,11 @@ class Board:
         self.player_in_panel = False
         self.on_line_piece_position = None
         self.on_line_piece_team = -1
+
+        self.max_last_moves = 5
+        self.last_moves = []
+
+class Move:
+    def __init__(self, team, msg):
+        self.team = team
+        self.msg  = msg

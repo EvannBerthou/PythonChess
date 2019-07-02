@@ -61,4 +61,5 @@ TODO:
                         Ajouter cette case aux cases possibles dans le mouvement
             Si non: 
                 ne rien faire
+    Fixer la taille des catégories du paneau de droite
 """

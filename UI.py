@@ -61,6 +61,21 @@ class UI:
         sx,sy = self.timeFont.size(text)
         game.win.blit(elapsedTime, (self.x + self.w / 2 - sx / 2, 290))
 
+        #BAR
+        pygame.draw.line(game.win, (15,15,15), (self.x, 330),(self.x + self.w, 330), 2)
+
+        text = "Last moves"
+        moves = self.titleFont.render(text, 1, (15,15,15))
+        sx,sy = self.titleFont.size(text)
+        game.win.blit(moves, (self.x + self.w / 2 - sx / 2, 335))
+
+        for i in range(game.board.max_last_moves):
+            if i >= len(game.board.last_moves): break
+            text = game.board.last_moves[i].msg
+            msg = self.turnFont.render(text, 1, (255,255,255) if game.board.last_moves[i].team else (15,15,15))
+            sx,sy = self.titleFont.size(text)
+            game.win.blit(msg, (self.x, 365 + sy*i))
+
 
         if game.board.player_in_panel:
             pygame.draw.rect(game.win, (255,255,255), (self.panel.x, self.panel.y, self.panel.w, self.panel.h))
@@ -73,7 +88,6 @@ class UI:
         self.timeFont = pygame.font.SysFont("Arial", 28)
         self.panel = None
         self.panel_buttons = []
-
 
 class Button:
     def __init__(self, x,y,w,h,sprite, id):
