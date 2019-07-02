@@ -31,7 +31,6 @@ class Piece:
                     board.eatCases.append((cy,cx))
                 return True
             board.moveCases.append((cy,cx))
-        return False
 
     def eat(self, board,x,y):
         px = int(self.x / board.cell_size)
@@ -43,6 +42,7 @@ class Piece:
         board.board[x][y] = self
         Piece.__init__(self, y * board.cell_size, x * board.cell_size, self.team, self.score)
         board.board[py][px] = Blank(0,0,0)
+        board.turn()
 
 class Blank:
     def __init__(self,x,y,team):
@@ -56,6 +56,10 @@ class Pawn(Piece):
         spriteName = "{}Pawn.png".format("black" if team == BLACK else "white")
         self.sprite = pygame.image.load(spriteName).convert_alpha()
         self.firstMove = True
+
+    def on_end_line(self, board):
+        px = int(self.x / board.cell_size)
+        if px == 0 or px == 7: return True
     
     def move(self, board, x,y):
         #CURRENT PIECE POSITION
@@ -67,6 +71,11 @@ class Pawn(Piece):
             board.board[x][y] = self
             self.firstMove = False
             board.turn()
+
+        if self.on_end_line(board):
+            board.on_line_piece_position = (x,y)
+            board.on_line_piece_team = self.team
+            board.player_in_panel = True
 
     def showAvailibleMove(self, board):
         x = int(self.x / board.cell_size)
@@ -92,7 +101,7 @@ class King(Piece):
         spriteName = "{}King.png".format("black" if team == BLACK else "white")
         self.sprite = pygame.image.load(spriteName).convert_alpha()
 
-    def showAvailibleMove(self, board): #TODO: CHECK THE TWO KING RULE
+    def showAvailibleMove(self, board):
         x = int(self.x / board.cell_size)
         y = int(self.y / board.cell_size)
 
@@ -176,7 +185,7 @@ class Bishop(Piece):
                     cx = x + dx * v
                     cy = y + dy * v
                     if cx == x and cy == y: continue
-                    if self.checkMoveAndEat(board, dx,dy): break
+                    if self.checkMoveAndEat(board, cx,cy): break
 
 class Knight(Piece):
     def __init__(self, x,y, team):

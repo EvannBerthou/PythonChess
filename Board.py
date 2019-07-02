@@ -42,6 +42,8 @@ class Board:
         return b
 
     def HasPieceMouse(self, mousex,mousey):
+        if self.player_in_panel: return
+
         x = int((mousex - self.x ) // self.cell_size)
         y = int((mousey - self.y)  // self.cell_size)
 
@@ -54,8 +56,9 @@ class Board:
             return
     
 
-        #TODO: PERMET DACTIVER LE TOUR PAR TOUR
-        if self.IsOccuped(x,y): return True # and self.board[x][y].team == self.playingTeam: return True
+        #TODO: PERMET D'ACTIVER LE TOUR PAR TOUR
+        if self.IsOccuped(x,y): return True
+        # if self.IsOccuped(x,y) and self.board[x][y].team == self.playingTeam: return True
 
         if (x,y) in self.moveCases:
             px,py = self.selectedCase
@@ -100,6 +103,23 @@ class Board:
                 if (i,j) in self.eatCases:
                     pygame.draw.rect(game.win, (255,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
                 self.board[i][j].draw(game)
+        
+        if self.player_in_panel:
+            if not game.ui.panel_buttons:
+                game.ui.create_buttons(game,self.on_line_piece_team)
+            self.on_player_in_panel(game)
+
+    def switch_piece_on_line(self,game,piece_id):
+        new_piece = self.GetPiece(piece_id)
+        px,py = self.on_line_piece_position
+        self.board[px][py] = new_piece(py * self.cell_size, px * self.cell_size, self.board[px][py].team)
+
+    def on_player_in_panel(self,game):
+        for btn in game.ui.panel_buttons:
+            if btn.check_clicked(game):
+                self.switch_piece_on_line(game, btn.id)
+                self.player_in_panel = False
+                btn.is_hovered = False
 
     def __init__(self, x,y,w,h):
         self.x, self.y = x,y
@@ -118,3 +138,6 @@ class Board:
         self.blackScore = 0
 
         self.elapsedTime = 0
+        self.player_in_panel = False
+        self.on_line_piece_position = None
+        self.on_line_piece_team = -1
