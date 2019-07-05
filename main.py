@@ -8,7 +8,7 @@ class Game:
         pygame.init()
         self.w, self.h = 1000,800
         self.win = pygame.display.set_mode((self.w, self.h))
-        self.board = Board(5,5,790,790)
+        self.board = Board(5,5,790,790, self)
         self.ui = UI(800,5,195,790)
         self.ui.create_panel(self)
         self.mouse_position = (0,0)
@@ -37,7 +37,7 @@ class Game:
                 if event.type == MOUSEBUTTONDOWN:
                     self.mouse_button_down = True
 
-            self.board.draw(self)
+            self.board.draw()
             self.ui.draw(self)
             pygame.display.update()
 
@@ -61,5 +61,6 @@ TODO:
                         Ajouter cette case aux cases possibles dans le mouvement
             Si non: 
                 ne rien faire
+
     Fixer la taille des catégories du paneau de droite
 """

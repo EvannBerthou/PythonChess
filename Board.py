@@ -66,7 +66,7 @@ class Board:
 
         if (x,y) in self.moveCases:
             px,py = self.selectedCase
-            self.last_moves.append(Move(self.playingTeam, "{}{} > {}{}".format(self.num_let(px),py+1,self.num_let(x),y+1)))
+            self.game.ui.add_last_move(self.game, Move(self.playingTeam, "{}{} > {}{}".format(self.num_let(px),py+1,self.num_let(x),y+1)))
             self.board[px][py].move(self, x,y)
     
     def IsOccuped(self, x,y):
@@ -94,42 +94,43 @@ class Board:
     def turn(self):
         self.playingTeam = (self.playingTeam + 1) % 2
 
-    def draw(self, game):
+    def draw(self):
         for i in range(BOARD_CASES):
             for j in range(BOARD_CASES):
                 x = self.x + i * self.cell_size
                 y = self.y + j * self.cell_size
                 color = (112,162,163) if ((i + j) % 2) else (177,228,186)
-                pygame.draw.rect(game.win, color, (x,y, self.cell_size, self.cell_size))
+                pygame.draw.rect(self.game.win, color, (x,y, self.cell_size, self.cell_size))
                 if (i,j) == self.selectedCase:
-                    pygame.draw.rect(game.win, (255,255,255), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 3)
+                    pygame.draw.rect(self.game.win, (255,255,255), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 3)
                 if (i,j) in self.moveCases:
-                    pygame.draw.rect(game.win, (100,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
+                    pygame.draw.rect(self.game.win, (100,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
                 if (i,j) in self.eatCases:
-                    pygame.draw.rect(game.win, (255,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
-                self.board[i][j].draw(game)
+                    pygame.draw.rect(self.game.win, (255,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
+                self.board[i][j].draw(self.game)
         
         if self.player_in_panel:
-            if not game.ui.panel_buttons:
-                game.ui.create_buttons(game,self.on_line_piece_team)
-            self.on_player_in_panel(game)
+            if not self.game.ui.panel_buttons:
+                self.game.ui.create_buttons(self.game,self.on_line_piece_team)
+            self.on_player_in_panel(self.game)
 
-    def switch_piece_on_line(self,game,piece_id):
+    def switch_piece_on_line(self,piece_id):
         new_piece = self.GetPiece(piece_id)
         px,py = self.on_line_piece_position
         self.board[px][py] = new_piece(py * self.cell_size, px * self.cell_size, self.board[px][py].team)
 
-    def on_player_in_panel(self,game):
-        for btn in game.ui.panel_buttons:
-            if btn.check_clicked(game):
-                self.switch_piece_on_line(game, btn.id)
+    def on_player_in_panel(self):
+        for btn in self.game.ui.panel_buttons:
+            if btn.check_clicked(self.game):
+                self.switch_piece_on_line(btn.id)
                 self.player_in_panel = False
                 btn.is_hovered = False
 
-    def __init__(self, x,y,w,h):
+    def __init__(self, x,y,w,h,game):
         self.x, self.y = x,y
         self.w, self.h = w,h
         self.cell_size = self.w / BOARD_CASES
+        self.game = game
 
         self.board = self.CreateBoard()
 
