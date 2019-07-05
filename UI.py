@@ -28,25 +28,21 @@ class UI:
 
         self.add_zone(self.titleFont.render("Chess", 1, (15,15,15)), "Turn")
 
-        text = "Turn: {}".format("White" if game.board.playingTeam else "Black")
-        turn = self.turnFont.render(text, 1, (15,15,15))
-        self.zones["Turn"].add_info_text(turn)
+        text = "'Turn: {}'.format('White' if game.board.playingTeam else 'Black')"
+        self.zones["Turn"].add_info_text(self.turnFont, text, game)
 
         self.add_zone(self.titleFont.render("Score", 1, (15,15,15)), "Score")
 
-        text = "White: {}".format(game.board.whiteScore)
-        scoreWhite = self.turnFont.render(text, 1, (15,15,15))
-        self.zones["Score"].add_info_text(scoreWhite)
+        text = "'White: {}'.format(game.board.whiteScore)"
+        self.zones["Score"].add_info_text(self.turnFont, text, game)
 
-        text = "Black: {}".format(game.board.blackScore)
-        scoreBlack = self.turnFont.render(text, 1, (15,15,15))
-        self.zones["Score"].add_info_text(scoreBlack)
+        text = "'Black: {}'.format(game.board.blackScore)"
+        self.zones["Score"].add_info_text(self.turnFont, text, game)
 
         self.add_zone(self.titleFont.render("Time", 1, (15,15,15)), "Time")
 
-        text = "{}".format(time.strftime('%M:%S', time.gmtime(game.board.elapsedTime)))
-        elapsedTime = self.timeFont.render(text, 1, (15,15,15))
-        self.zones["Time"].add_info_text(elapsedTime)
+        text = "'{}'.format(time.strftime('%M:%S', time.gmtime(game.board.elapsedTime)))"
+        self.zones["Time"].add_info_text(self.timeFont, text, game)
 
         self.add_zone(self.titleFont.render("Last Moves", 1, (15,15,15)), "Last Moves")
 
@@ -54,15 +50,14 @@ class UI:
         pygame.draw.rect(game.win, (200,200,200), (self.x, self.y, self.w, self.h)) #BACKGROUND
 
         for k,v in self.zones.items(): v.draw(game)
+
         if game.board.player_in_panel:
             pygame.draw.rect(game.win, (255,255,255), (self.panel.x, self.panel.y, self.panel.w, self.panel.h))
             [btn.draw(game) for btn in self.panel_buttons]
 
     def add_last_move(self, game,msg):
         if len(self.zones["Last Moves"].info_texts) >= game.board.max_last_moves: self.zones["Last Moves"].remove(0)
-        text = msg.msg
-        msg = self.turnFont.render(text, 1, (255,255,255) if msg.team else (15,15,15))
-        self.zones["Last Moves"].add_info_text(msg)
+        self.zones["Last Moves"].add_info_text(self.turnFont, msg.msg, game, True, (255,255,255) if msg.team else (0,0,0))
 
     def __init__(self, x,y,w,h):
         self.x, self.y, self.w, self.h = x,y,w,h
@@ -105,14 +100,16 @@ class Zone:
 
     def draw(self, game):
         game.win.blit(self.title, (self.x + game.ui.w / 2- self.title.get_width() / 2, self.y))
-        for t in self.info_texts: t.draw(game)
+        for t in self.info_texts: 
+            t.update_text(game)
+            t.draw(game)
         self.draw_bar(game)
 
-    def add_info_text(self, text):
+    def add_info_text(self, font,condition, game, static = False, color = (15,15,15)):
         last_y = self.info_texts[-1].y if len(self.info_texts) else self.y
         text_offset = self.info_texts[-1].get_height() if len(self.info_texts) else self.title.get_height()
         next_y = last_y + self.y_offset + text_offset
-        info_t = info_text(self.x,next_y,text)
+        info_t = info_text(self.x,next_y, font, condition, game, static, color)
         self.info_texts.append(info_t)
 
     def get_height(self):
@@ -132,9 +129,14 @@ class Zone:
 
 
 class info_text:
-    def __init__(self, x,y,text):
+    def __init__(self, x,y, font,condition, game, static, color):
         self.x, self.y = x,y
-        self.text = text
+        self.static = static
+        self.color = color
+        self.text = ""
+        self.condition = condition
+        self.font = font
+        self.update_text(game)
             
     def draw(self, game):
         game.win.blit(self.text, (self.x, self.y))
@@ -142,5 +144,8 @@ class info_text:
     def get_height(self):
         return self.text.get_height()
 
-    def update_text(self, font, text):
-        self.text = font.render(text, 1, (15,15,15))
+    def get_text(self, game):
+        return str(eval(self.condition)) if not self.static else self.condition
+
+    def update_text(self, game):
+        self.text = self.font.render(self.get_text(game), 1, self.color)
