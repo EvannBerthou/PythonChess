@@ -48,5 +48,4 @@ game.run()
 """
 TODO:
     Non support du Rock
-    Corriger les points qui s'ajoutent lors de la vérification de l'échec et mat
 """
