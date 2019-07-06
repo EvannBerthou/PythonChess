@@ -36,7 +36,7 @@ class Piece:
         py = int(self.y / board.cell_size)
 
         if self.team == WHITE: board.whiteScore += board.board[x][y].score
-        if self.team == BLACK: board.whiteScore += board.board[x][y].score
+        if self.team == BLACK: board.blackScore += board.board[x][y].score
 
         board.board[x][y] = self
         Piece.__init__(self, y * board.cell_size, x * board.cell_size, self.team, self.score)

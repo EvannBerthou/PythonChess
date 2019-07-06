@@ -128,6 +128,8 @@ class Board:
 
 
     def check_mate(self):
+        prev_white_score = self.whiteScore
+        prev_black_score = self.blackScore
         self.anti_check_moves.clear()
         self.anti_check_eats.clear()
         for i in range(BOARD_CASES):
@@ -156,7 +158,11 @@ class Board:
                     piece.move(self, last_pos[0], last_pos[1])
                     self.board[eat[0]][eat[1]] = previous_piece
 
-        if not self.anti_check_moves and not self.anti_check_eats: print("echec et mat")
+        if not self.anti_check_moves and not self.anti_check_eats:
+            self.game.ui.zones["Time"].info_texts[0].freeze = True
+            print("echec et mat")
+        self.whiteScore = prev_white_score
+        self.blackScore = prev_black_score
 
     def turn(self):
         self.playingTeam = (self.playingTeam + 1) % 2

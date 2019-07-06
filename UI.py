@@ -132,6 +132,7 @@ class info_text:
     def __init__(self, x,y, font,condition, game, static, color):
         self.x, self.y = x,y
         self.static = static
+        self.freeze = False
         self.color = color
         self.text = ""
         self.condition = condition
@@ -148,4 +149,5 @@ class info_text:
         return str(eval(self.condition)) if not self.static else self.condition
 
     def update_text(self, game):
-        self.text = self.font.render(self.get_text(game), 1, self.color)
+        if not self.freeze:
+            self.text = self.font.render(self.get_text(game), 1, self.color)
