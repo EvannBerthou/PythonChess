@@ -29,13 +29,13 @@ class Game:
                     quit()
 
                 if event.type == MOUSEBUTTONDOWN:
+
+                    self.mouse_button_down = True
+
                     if self.board.HasPieceMouse(self.mouse_position[0], self.mouse_position[1]):
                         self.board.GetPieceMouse(self.mouse_position[0], self.mouse_position[1])
                     else:
                         self.board.UnselectCase()
-
-                if event.type == MOUSEBUTTONDOWN:
-                    self.mouse_button_down = True
 
             self.board.draw()
             self.ui.draw(self)
@@ -48,19 +48,5 @@ game.run()
 """
 TODO:
     Non support du Rock
-
-    La partie ne se termine jamais:
-        A la fin d'un tour, vérifier pour toute les pièces du joueur adverse si elle peut manger le roi:
-            Si oui:
-                Désactiver le mouvement des pièces qui ne permettent pas le roi de sortir de l'échec 
-                Pour toutes les cases autour du roi en échec, vérifier si le roi se fait toujours manger sur cette case:
-                    Si oui:
-                        Si toutes les cases ne permettent pas au roi de bouger:
-                            Échec et mat
-                    Si non:
-                        Ajouter cette case aux cases possibles dans le mouvement
-            Si non: 
-                ne rien faire
-
-    Fixer la taille des catégories du paneau de droite
+    Corriger les points qui s'ajoutent lors de la vérification de l'échec et mat
 """

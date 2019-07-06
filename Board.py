@@ -1,4 +1,5 @@
 import pygame
+import pdb
 from Piece import Piece, Blank, Pawn, Rook, Knight, Bishop, Queen, King
 from random import randint
 
@@ -56,18 +57,20 @@ class Board:
         if (x,y) in self.eatCases:
             px, py = self.selectedCase
             self.board[px][py].eat(self, x,y)
+            self.turn()
             self.UnselectCase()
             return
     
 
         #TODO: PERMET D'ACTIVER LE TOUR PAR TOUR
-        if self.IsOccuped(x,y): return True
-        # if self.IsOccuped(x,y) and self.board[x][y].team == self.playingTeam: return True
+        # if self.IsOccuped(x,y): return True
+        if self.IsOccuped(x,y) and self.board[x][y].team == self.playingTeam: return True
 
         if (x,y) in self.moveCases:
             px,py = self.selectedCase
             self.game.ui.add_last_move(self.game, Move(self.playingTeam, "{}{} > {}{}".format(self.num_let(px),py+1,self.num_let(x),y+1)))
             self.board[px][py].move(self, x,y)
+            self.turn()
     
     def IsOccuped(self, x,y):
         return self.board[int(x)][int(y)].team >= 0
@@ -84,6 +87,17 @@ class Board:
         self.eatCases.clear()
         self.board[x][y].showAvailibleMove(self)
 
+        moves = []
+        eats = []
+        if self.check_case:
+            for move in self.moveCases:
+                if move in self.anti_check_moves: moves.append(move)
+
+            for eat in self.eatCases:
+                if eat in self.anti_check_eats: eats.append(eat)
+
+            self.moveCases = moves
+            self.eatCases = eats
         return self.board[x][y]
 
     def UnselectCase(self):
@@ -91,8 +105,63 @@ class Board:
         self.moveCases.clear()
         self.eatCases.clear()
  
+    def can_be_eaten_at(self, x,y): #RETURN TRUE IF THIS PIECE AT POSITION (x,y) CAN BE EATEN
+        for i in range(BOARD_CASES):
+            for j in range(BOARD_CASES):
+                if self.board[i][j].team == -1: continue
+                self.board[i][j].showAvailibleMove(self)
+                for pos in self.eatCases:
+                    if pos == (x,y): return True
+        return False
+    
+    def check(self):
+        self.check_case = None
+        for i in range(BOARD_CASES):
+            for j in range(BOARD_CASES):
+                if self.board[i][j].team == -1: continue
+                if self.board[i][j].score == 10: #IF THIS PIECE IS THE KING
+                    if self.can_be_eaten_at(i,j): #IF THIS KING CAN BE EATEN
+                        self.check_case = (i,j)
+        self.moveCases.clear()
+        self.eatCases.clear()
+        return self.check_case != None
+
+
+    def check_mate(self):
+        self.anti_check_moves.clear()
+        self.anti_check_eats.clear()
+        for i in range(BOARD_CASES):
+            for j in range(BOARD_CASES):
+                self.moveCases.clear()
+                self.eatCases.clear()
+                piece = self.board[i][j]
+                if piece.team == -1 or piece.team != self.playingTeam: continue
+
+                last_pos = (i,j)
+                piece.showAvailibleMove(self)
+
+                for move in self.moveCases:
+                    piece.move(self, move[0], move[1])
+                    if not self.check():
+                        self.anti_check_moves.append(move)
+                    piece.move(self, last_pos[0], last_pos[1]) #UNDO THE MOVE
+
+                piece.showAvailibleMove(self)
+
+                for eat in self.eatCases:
+                    previous_piece = self.board[eat[0]][eat[1]]
+                    piece.eat(self, eat[0], eat[1])
+                    if not self.check():
+                        self.anti_check_eats.append(eat)
+                    piece.move(self, last_pos[0], last_pos[1])
+                    self.board[eat[0]][eat[1]] = previous_piece
+
+        if not self.anti_check_moves and not self.anti_check_eats: print("echec et mat")
+
     def turn(self):
         self.playingTeam = (self.playingTeam + 1) % 2
+        if self.check():
+            self.check_mate()
 
     def draw(self):
         for i in range(BOARD_CASES):
@@ -107,12 +176,14 @@ class Board:
                     pygame.draw.rect(self.game.win, (100,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
                 if (i,j) in self.eatCases:
                     pygame.draw.rect(self.game.win, (255,50,50), (x + 1, y + 1, self.cell_size - 1, self.cell_size - 1), 5)
+                if self.check_case:
+                    pygame.draw.rect(self.game.win, (0,0,255), (self.check_case[0] * self.cell_size + 6, self.check_case[1] * self.cell_size + 6, self.cell_size - 1, self.cell_size - 1), 5)
                 self.board[i][j].draw(self.game)
         
         if self.player_in_panel:
             if not self.game.ui.panel_buttons:
                 self.game.ui.create_buttons(self.game,self.on_line_piece_team)
-            self.on_player_in_panel(self.game)
+            self.on_player_in_panel()
 
     def switch_piece_on_line(self,piece_id):
         new_piece = self.GetPiece(piece_id)
@@ -137,6 +208,9 @@ class Board:
         self.selectedCase = None
         self.moveCases = []
         self.eatCases = []
+        self.check_case = None
+        self.anti_check_moves = []
+        self.anti_check_eats = []
 
         self.playingTeam = 1
 

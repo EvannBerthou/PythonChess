@@ -22,7 +22,6 @@ class Piece:
             board.board[py][px] = Blank(0,0,0)
             Piece.__init__(self, y * board.cell_size, x * board.cell_size, self.team, self.score)
             board.board[x][y] = self
-            board.turn()
     
     def checkMoveAndEat(self, board, cx,cy):
         if cx >= 0 and cy >= 0 and cx < 8 and cy < 8:
@@ -42,7 +41,6 @@ class Piece:
         board.board[x][y] = self
         Piece.__init__(self, y * board.cell_size, x * board.cell_size, self.team, self.score)
         board.board[py][px] = Blank(0,0,0)
-        board.turn()
 
 class Blank:
     def __init__(self,x,y,team):
@@ -70,9 +68,8 @@ class Pawn(Piece):
             Piece.__init__(self, y * board.cell_size, x * board.cell_size, self.team, 1)
             board.board[x][y] = self
             self.firstMove = False
-            board.turn()
 
-        if self.on_end_line(board):
+        if self.on_end_line(board) and not board.check_case:
             board.on_line_piece_position = (x,y)
             board.on_line_piece_team = self.team
             board.player_in_panel = True
@@ -82,18 +79,18 @@ class Pawn(Piece):
         y = int(self.y / board.cell_size)
 
         direction = 1 if self.team == 0 else -1
-
         if x + direction >= 8 or x + direction < 0: return
+
+        for d in [1,-1]:
+            if y + d < 0 or y + d >= 8: continue
+            if board.IsOccuped(y + d, x + direction) and board.board[y + d][x + direction].team != self.team:
+                board.eatCases.append((y + d,x + direction))
         if not board.IsOccuped(y, x + direction):
             board.moveCases.append((y, x + direction))
             if self.firstMove and not board.IsOccuped(y, x + direction * 2):
                 board.moveCases.append((y, x + direction * 2))
 
 
-        for d in [1,-1]:
-            if y + d < 0 or y + d >= 8: continue
-            if board.IsOccuped(y + d, x + direction) and board.board[y + d][x + direction].team != self.team:
-                board.eatCases.append((y + d,x + direction))
 
 class King(Piece):
     def __init__(self, x,y, team):
@@ -107,9 +104,9 @@ class King(Piece):
 
         for cx in [x - 1, x, x + 1]:
             for cy in [y - 1, y, y + 1]:
-                if self.checkOtherKing(board, cx,cy): continue
                 if x == cx and y == cy: continue
-                if self.checkMoveAndEat(board, cx,cy): break
+                if self.checkOtherKing(board, cx,cy): continue
+                self.checkMoveAndEat(board, cx,cy)
 
     def checkOtherKing(self, board, x,y):
         for cx in [x - 1, x, x + 1]:
@@ -120,7 +117,6 @@ class King(Piece):
                     if board.board[cy][cx].score == self.score and board.board[cy][cx].team != self.team:
                         return True
         return False
-
 
 
 class Queen(Piece):
@@ -196,7 +192,6 @@ class Knight(Piece):
     def showAvailibleMove(self, board):
         x = int(self.x / board.cell_size)
         y = int(self.y / board.cell_size)
-
         for d in [(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1),(-2,1),(-1,2)]:
             cx = x + d[0]
             cy = y + d[1]
